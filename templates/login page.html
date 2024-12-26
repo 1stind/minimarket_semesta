@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Kasir</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+</head>
+<body class="bg-light">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card mt-5">
+          <div class="card-body">
+            <h2 class="card-title text-center">Login Akun</h2>
+            <form id="form-login" action="/" method="post">
+              <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" class="form-control" id="username" name="username" placeholder="Enter username">
+              </div>
+              <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" id="password" name="password" placeholder="Enter password">
+              </div>
+              <button type="submit" class="btn btn-primary btn-block">Login</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Popup -->
+  <div class="modal fade" id="limitExceededModal" tabindex="-1" role="dialog" aria-labelledby="limitExceededModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="limitExceededModalLabel">Login Dibatasi</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Pesan error akan muncul di sini -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    $(document).ready(function () {
+  $('#form-login').on('submit', function (event) {
+    event.preventDefault(); // Mencegah pengiriman formulir secara default
+
+    const formData = $(this).serialize(); // Ambil data dari formulir
+
+    // Kirim permintaan AJAX ke server
+    $.ajax({
+      url: '/login',
+      type: 'POST',
+      data: formData,
+      success: function (response) {
+        if (response.success) {
+          // Jika login berhasil, redirect ke URL yang diberikan
+          window.location.href = response.redirect_url;
+        } else {
+          // Tampilkan pesan error di modal jika login gagal
+          $('#limitExceededModal .modal-body').text(response.error);
+          $('#limitExceededModal').modal('show');
+        }
+      },
+      error: function (xhr) {
+        // Tampilkan modal jika terjadi error (termasuk rate limit)
+        const errorMessage = xhr.responseJSON?.error || "Terjadi kesalahan. Silakan coba lagi.";
+        $('#limitExceededModal .modal-body').text(errorMessage);
+        $('#limitExceededModal').modal('show');
+      }
+    });
+  });
+});
+
+  </script>
+  
+</body>
+</html>
