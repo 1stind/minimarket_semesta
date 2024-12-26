@@ -1,0 +1,1 @@
+# minimarket_semesta
