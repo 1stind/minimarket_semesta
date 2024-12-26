@@ -71,8 +71,10 @@
         sendMessage();
 });
 
-        const socket = io();
-    
+        const socket = io('', {
+        transports: ['websocket'], // Hanya gunakan WebSocket
+        path: '/socket.io', // Pastikan ini sesuai
+
         socket.on('receive_message', function(data) {
         if (data.penerima === '{{ session.username }}' || data.pengirim === '{{ session.username }}') {
         const chatBox = document.getElementById('chat-box');
