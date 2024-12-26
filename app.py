@@ -18,7 +18,7 @@ app.config['MYSQL_PORT'] = 3306
 
 
 app.secret_key = 'secret key'
-CORS(app, origins=["*"])
+CORS(app, origins=["https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/"])
 socketio = SocketIO(app, cors_allowed_origins="*", path="/socket.io")
 
 
