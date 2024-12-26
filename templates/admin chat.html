@@ -71,10 +71,8 @@
         sendMessage();
 });
 
-        const socket = io('', {
-        transports: ['websocket'], // Hanya gunakan WebSocket
-        path: '/socket.io', // Pastikan ini sesuai
-
+        const socket = io("https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/");
+    
         socket.on('receive_message', function(data) {
         if (data.penerima === '{{ session.username }}' || data.pengirim === '{{ session.username }}') {
         const chatBox = document.getElementById('chat-box');
