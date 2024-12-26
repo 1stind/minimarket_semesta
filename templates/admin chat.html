@@ -71,30 +71,28 @@
         sendMessage();
 });
 
-// Inisialisasi Socket.IO
-const socket = io();
-
-// Event untuk menerima pesan
-socket.on('receive_message', function(data) {
-    if (data.penerima === username || data.pengirim === username) {
+        const socket = io();
+    
+        socket.on('receive_message', function(data) {
+        if (data.penerima === '{{ session.username }}' || data.pengirim === '{{ session.username }}') {
         const chatBox = document.getElementById('chat-box');
         const messageElement = document.createElement('p');
         messageElement.innerHTML = `<strong>${data.pengirim}:</strong> ${data.message}`;
         chatBox.appendChild(messageElement);
-    }
+        }
 });
-
-// Mengirim pesan
-function sendMessage() {
-    const message = document.getElementById('message-input').value;
-    socket.emit('send_message', {
-        message: message,
-        penerima: kasir,
-        pengirim: username
-    });
-    document.getElementById('message-input').value = '';
-}
-
+    
+        // Mengirim pesan ke server
+        function sendMessage() {
+            const message = document.getElementById('message-input').value;
+            const penerima = '{{ kasir }}';  // Dapatkan dari backend
+            socket.emit('send_message', {
+                message: message,
+                penerima: penerima,
+                pengirim: '{{ session.username }}'  // Pengirim dari session
+            });
+            document.getElementById('message-input').value = '';
+        }
     </script>
     
 </body>
