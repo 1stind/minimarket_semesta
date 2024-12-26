@@ -71,11 +71,8 @@
         sendMessage();
 });
 
-const kasir = '{{ kasir }}';
-const username = '{{ username }}';
-
 // Inisialisasi Socket.IO
-const socket = io('', { path: '/socket.io' });
+const socket = io();
 
 // Event untuk menerima pesan
 socket.on('receive_message', function(data) {
