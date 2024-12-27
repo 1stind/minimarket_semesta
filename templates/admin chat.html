@@ -71,7 +71,7 @@
         sendMessage();
 });
 
-        const socket = io("https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/");
+        const socket = io("http://172.16.0.4:8000");
     
         socket.on('receive_message', function(data) {
         if (data.penerima === '{{ session.username }}' || data.pengirim === '{{ session.username }}') {
