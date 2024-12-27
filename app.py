@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, json
 from flask_mysqldb import MySQL, MySQLdb
 import mysql.connector
 from flask_limiter import Limiter
@@ -160,48 +160,55 @@ def duitku():
         return jsonify({"error": "Data transaksi tidak lengkap."}), 400
 
     # Siapkan payload untuk API Duitku
-    datetime_now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
     payment_method = request.form.get('payment_method', 'VC')  # Default ke Virtual Credit (VC)
+    # Ambil waktu saat ini (datetime)
+    datetime_now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
     callback_url = "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/payment"  # URL untuk menerima notifikasi pembayaran
-    return_url = "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/transaksin"  # URL untuk redirect setelah pembayaran
-    
+    return_url = "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/transaksi"  # URL untuk redirect setelah pembayaran
     print(datetime_now)
+
     # Buat signature
+    # signature_string = f"{MERCHANT_CODE}{no_nota}{total_pembayaran}{MERCHANT_KEY}"
+    # signature = hashlib.sha256(signature_string.encode('utf-8')).hexdigest()
     signature_string = f"{MERCHANT_CODE}{total_pembayaran}{datetime_now}{MERCHANT_KEY}"
     signature = hashlib.sha256(signature_string.encode('utf-8')).hexdigest()
+
 
     payload = {
         "merchantCode": MERCHANT_CODE,
         "paymentAmount": total_pembayaran,
+        "paymentMethod": payment_method,
         "merchantOrderId": no_nota,
         "productDetails": "Pembelian Produk",
-        "email":"minimarketsemesta@gmail.com",
-        "paymentMethod": payment_method,
-        "customerVaName":"minimarketsemesta",
         "callbackUrl": callback_url,
+        "email":"minimarketsemesta@gmail.com",
         "returnUrl": return_url,
+        "customerVaName":"minimarketsemesta",
         "signature": signature
     }
     print(payload)
+    payload_string = json.dumps(payload)
+
+    url = "https://sandbox.duitku.com/webapi/api/merchant/paymentmethod/getpaymentmethod"
+
     headers = {"Content-Type": "application/json"}
 
     # Kirim permintaan ke API Duitku
     try:
-        response = requests.post(DUITKU_BASE_URL, json=payload, headers=headers)
-        result = response.json()
+        response = requests.post(url, data=payload_string, headers=headers, verify=False)
 
-        # Tambahkan logging untuk response
-        print(f"Response status: {response.status_code}")
-        print(f"Response body: {response.text}")
-
-        if response.status_code == 200 and "paymentUrl" in result:
-            payment_url = result["paymentUrl"]
-            return redirect(payment_url)  # Redirect ke URL pembayaran
+        # Periksa kode status HTTP
+        if response.status_code == 200:
+            # Parse respons JSON
+            results = response.json()
+            print("Hasil:", json.dumps(results, indent=4))
         else:
-            return jsonify({"error": "Gagal membuat pembayaran.", "message": result.get("message", "Unknown error")}), 400
+            # Tangani kesalahan
+            error_message = response.json().get("Message", "Unknown error")
+            print(f"Server Error {response.status_code}: {error_message}")
 
     except Exception as e:
-        return jsonify({"error": "Terjadi kesalahan saat menghubungi API Duitku.", "details": str(e)}), 500
+        print(f"Terjadi kesalahan saat menghubungi API: {e}")
     
 @app.route('/transaksi', methods=['GET'])
 def transaksi():
