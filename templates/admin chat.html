@@ -71,17 +71,35 @@
         sendMessage();
 });
 
-        const socket = io("*");
-    
-        socket.on('receive_message', function(data) {
-        if (data.penerima === '{{ session.username }}' || data.pengirim === '{{ session.username }}') {
+       // Debugging: Log ketika socket berhasil terhubung
+socket.on('connect', function() {
+    console.log("Socket connected with ID:", socket.id);
+});
+
+// Debugging: Log error ketika gagal terhubung
+socket.on('connect_error', function(error) {
+    console.error("Socket connection failed:", error);
+});
+
+// Debugging: Log untuk menerima pesan
+socket.on('receive_message', function(data) {
+    console.log("Received message:", data); // Log pesan yang diterima
+
+    if (data.penerima === '{{ session.username }}' || data.pengirim === '{{ session.username }}') {
+        console.log("Displaying message from", data.pengirim, "to", data.penerima); // Log untuk memeriksa penerima dan pengirim
         const chatBox = document.getElementById('chat-box');
         const messageElement = document.createElement('p');
         messageElement.innerHTML = `<strong>${data.pengirim}:</strong> ${data.message}`;
         chatBox.appendChild(messageElement);
-        }
+    } else {
+        console.log("Message ignored. Sender or recipient doesn't match the current user.");
+    }
 });
-    
+
+// Debugging: Log error jika terjadi masalah dalam mengirim pesan
+socket.on('error', function(error) {
+    console.error("Socket error:", error);
+});  
         // Mengirim pesan ke server
         function sendMessage() {
             const message = document.getElementById('message-input').value;
