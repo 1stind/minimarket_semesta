@@ -159,12 +159,14 @@ def duitku():
         return jsonify({"error": "Data transaksi tidak lengkap."}), 400
 
     # Siapkan payload untuk API Duitku
+    datetime_now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'  # Format UTC dengan milidetik
     payment_method = request.form.get('payment_method', 'VC')  # Default ke Virtual Credit (VC)
     callback_url = "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/payment"  # URL untuk menerima notifikasi pembayaran
     return_url = "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/transaksin"  # URL untuk redirect setelah pembayaran
-
+    
+    print(datetime_now)
     # Buat signature
-    signature_string = f"{MERCHANT_CODE}{no_nota}{total_pembayaran}{MERCHANT_KEY}"
+    signature_string = f"{MERCHANT_CODE}{total_pembayaran}{datetime_now}{MERCHANT_KEY}"
     signature = hashlib.sha256(signature_string.encode('utf-8')).hexdigest()
 
     payload = {
