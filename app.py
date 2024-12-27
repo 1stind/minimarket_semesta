@@ -23,7 +23,7 @@ allowed_origins = [
 ]
 
 app.secret_key = 'secret key'
-CORS(app, origins=["https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/"])
+CORS(app, origins=["*"])
 socketio = SocketIO(app, cors_allowed_origins=allowed_origins, path="/socket.io")
 
 
