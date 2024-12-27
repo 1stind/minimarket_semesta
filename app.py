@@ -38,8 +38,8 @@ mysql = MySQL(app)
 
 # Konfigurasi API Duitku
 DUITKU_BASE_URL = "https://sandbox.duitku.com/webapi/api/merchant/v2/inquiry"
-MERCHANT_CODE = "DS21366"  # Ganti dengan kode merchant Anda
-MERCHANT_KEY = "d2a335e77105918ce19b9733f9e9fd52"  # Ganti dengan merchant key Anda
+MERCHANT_CODE = "DS21366"
+MERCHANT_KEY = "d2a335e77105918ce19b9733f9e9fd52" 
 
 
 
@@ -161,7 +161,7 @@ def duitku():
     # Siapkan payload untuk API Duitku
     payment_method = request.form.get('payment_method', 'VC')  # Default ke Virtual Credit (VC)
     callback_url = "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/payment"  # URL untuk menerima notifikasi pembayaran
-    # return_url = "http://yourdomain.com/return"  # URL untuk redirect setelah pembayaran
+    return_url = "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/transaksin"  # URL untuk redirect setelah pembayaran
 
     # Buat signature
     signature_string = f"{MERCHANT_CODE}{no_nota}{total_pembayaran}{MERCHANT_KEY}"
@@ -170,12 +170,13 @@ def duitku():
     payload = {
         "merchantCode": MERCHANT_CODE,
         "paymentAmount": total_pembayaran,
-        "paymentMethod": payment_method,
         "merchantOrderId": no_nota,
         "productDetails": "Pembelian Produk",
-        "callbackUrl": callback_url,
         "email":"minimarketsemesta@gmail.com",
-        # "returnUrl": return_url,
+        "paymentMethod": payment_method,
+        "customerVaName":"minimarketsemesta",
+        "callbackUrl": callback_url,
+        "returnUrl": return_url,
         "signature": signature
     }
     print(payload)
