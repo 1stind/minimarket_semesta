@@ -16,10 +16,15 @@ app.config['MYSQL_PASSWORD'] = 'Semesta123'
 app.config['MYSQL_DB'] = 'minimarket_semesta'
 app.config['MYSQL_PORT'] = 3306
 
+allowed_origins = [
+    "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/chat/yaya",
+    "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/chat/dini",
+    "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/chat/vito"
+]
 
 app.secret_key = 'secret key'
 CORS(app, origins=["https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/"])
-socketio = SocketIO(app, cors_allowed_origins="https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/", path="/socket.io")
+socketio = SocketIO(app, cors_allowed_origins=allowed_origins, path="/socket.io")
 
 
 # Initialize limiter after app is configured
