@@ -24,7 +24,7 @@ allowed_origins = [
 
 app.secret_key = 'secret key'
 CORS(app, origins=["*"])
-socketio = SocketIO(app, cors_allowed_origins=allowed_origins, path="/socket.io")
+socketio = SocketIO(app, cors_allowed_origins="*", path="/socket.io")
 
 
 # Initialize limiter after app is configured
