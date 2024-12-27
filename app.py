@@ -160,7 +160,6 @@ def duitku():
         return jsonify({"error": "Data transaksi tidak lengkap."}), 400
 
     # Siapkan payload untuk API Duitku
-    payment_method = request.form.get('payment_method', 'VC')  # Default ke Virtual Credit (VC)
     # Ambil waktu saat ini (datetime)
     datetime_now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
     callback_url = "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/payment"  # URL untuk menerima notifikasi pembayaran
@@ -168,47 +167,36 @@ def duitku():
     print(datetime_now)
 
     # Buat signature
-    # signature_string = f"{MERCHANT_CODE}{no_nota}{total_pembayaran}{MERCHANT_KEY}"
-    # signature = hashlib.sha256(signature_string.encode('utf-8')).hexdigest()
     signature_string = f"{MERCHANT_CODE}{total_pembayaran}{datetime_now}{MERCHANT_KEY}"
     signature = hashlib.sha256(signature_string.encode('utf-8')).hexdigest()
 
+    print(f"Signature String: {signature_string}")
+    print(f"Signature (SHA256): {signature}")
 
     payload = {
-        "merchantCode": MERCHANT_CODE,
-        "paymentAmount": total_pembayaran,
-        "paymentMethod": payment_method,
-        "merchantOrderId": no_nota,
-        "productDetails": "Pembelian Produk",
-        "callbackUrl": callback_url,
-        "email":"minimarketsemesta@gmail.com",
-        "returnUrl": return_url,
-        "customerVaName":"minimarketsemesta",
-        "signature": signature
+        'merchantcode': MERCHANT_CODE,
+        'amount': total_pembayaran,
+        'datetime': datetime_now,
+        'signature': signature
     }
+ 
     print(payload)
-    payload_string = json.dumps(payload)
+    url = 'https://sandbox.duitku.com/webapi/api/merchant/paymentmethod/getpaymentmethod'
+    headers = {'Content-Type': 'application/json'}
 
-    url = "https://sandbox.duitku.com/webapi/api/merchant/paymentmethod/getpaymentmethod"
-
-    headers = {"Content-Type": "application/json"}
-
-    # Kirim permintaan ke API Duitku
     try:
-        response = requests.post(url, data=payload_string, headers=headers, verify=False)
+        response = requests.post(url, json=payload, headers=headers, verify=False)  # SSL verification dinonaktifkan
 
-        # Periksa kode status HTTP
+        # Menangani respons
         if response.status_code == 200:
-            # Parse respons JSON
-            results = response.json()
-            print("Hasil:", json.dumps(results, indent=4))
+            print("Respons:", response.json())
         else:
-            # Tangani kesalahan
-            error_message = response.json().get("Message", "Unknown error")
+            response_json = response.json()
+            error_message = response_json.get("Message", "Unknown error")
             print(f"Server Error {response.status_code}: {error_message}")
 
     except Exception as e:
-        print(f"Terjadi kesalahan saat menghubungi API: {e}")
+        print(f"Terjadi kesalahan: {e}")
     
 @app.route('/transaksi', methods=['GET'])
 def transaksi():
