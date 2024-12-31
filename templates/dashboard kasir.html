@@ -58,11 +58,12 @@
                   <p>Pesan</p>
               </a>
           </li>
-          <li class="nav-item">
-            <a href="{{ url_for('duitku') }}" class="nav-link">
-                <i class="fa-solid fa-envelope"></i>
-                <p>E-Payment</p>
-            </a>
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#bayarModal">
+              <i class="fa-solid fa-envelope"></i>
+              <p>E-Payment</p>
+          </a>
+        </li>
         </li>
           <li class="nav-item">
             <a href="{{ url_for('login') }}" class="nav-link">
@@ -178,29 +179,89 @@
     </div>
     <!-- Modal -->
     <div class="modal fade" id="bayarModal" tabindex="-1" aria-labelledby="bayarModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="bayarModalLabel"> Kembalian</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <p>Rp. {{ kembalian }}</p>
-          <p>Terima kasih telah berbelanja!</span></p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >
-            Tutup
-          </button>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="bayarModalLabel">Pilih Metode Pembayaran</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+    
+          <div class="modal-body">
+            <!-- Form untuk pengiriman data -->
+            <form id="paymentForm" action="{{ url_for('duitku') }}" method="POST">
+              <!-- Pilih Metode Pembayaran -->
+              <div class="form-group">
+                <label for="paymentMethod">Pilih Metode Pembayaran</label>
+                <select name="paymentMethod" id="paymentMethod" class="form-control" required>
+        
+                    <!-- QRIS -->
+                    <option value="SP">Shopee Pay (QRIS)</option>
+                    <option value="LQ">LinkAja (QRIS)</option>
+                    <option value="NQ">Nobu (QRIS)</option>
+                    <option value="DQ">DANA (QRIS)</option>
+                    <option value="GQ">Gudang Voucher (QRIS)</option>
+                    <option value="SQ">Nusapay (QRIS)</option>
+        
+                    <!-- Virtual Account -->
+                    <option value="BC">BCA Virtual Account</option>
+                    <option value="M2">Mandiri Virtual Account</option>
+                    <option value="VA">Maybank Virtual Account</option>
+                    <option value="I1">BNI Virtual Account</option>
+                    <option value="B1">CIMB Niaga Virtual Account</option>
+                    <option value="BT">Permata Bank Virtual Account</option>
+                    <option value="A1">ATM Bersama</option>
+                    <option value="AG">Bank Artha Graha</option>
+                    <option value="NC">Bank Neo Commerce/BNC</option>
+                    <option value="BR">BRIVA</option>
+                    <option value="S1">Bank Sahabat Sampoerna</option>
+                    <option value="DM">Danamon Virtual Account</option>
+                    <option value="BV">BSI Virtual Account</option>
+                </select>
+            </div>
+    
+              <!-- Tombol Kirim -->
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Proceed to Payment</button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
+    
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body><!--end::Body-->
 </html>
-
-    
+<!-- <div class="modal fade" id="bayarModal" tabindex="-1" aria-labelledby="bayarModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="bayarModalLabel"> Update Produk </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="paymentForm" action="{{ url_for('duitku') }}" method="POST">
+          <div class="form-group">
+            <label for="paymentMethod">Pilih Metode Pembayaran</label>
+            <select name="paymentMethod" id="paymentMethod" class="form-control" required>
+              <option value="OV">OVO</option>
+              <option value="CC">Credit Card</option>
+              <option value="VA">Bank Transfer</option>
+              <option value="GP">GoPay</option>
+              <option value="SP">ShopeePay</option>
+            </select>
+          </div>
+            Tombol Kirim
+           <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Proceed to Payment</button>
+          </div>
+        </form>
+      </div>
+    </div>
+      </div>
+    </div>
+  </div>
+</div>
+     -->
