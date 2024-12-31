@@ -1,13 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, json
 from flask_mysqldb import MySQL, MySQLdb
 import mysql.connector
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 import hashlib
 import requests
 from datetime import datetime
+import logging
 
 app = Flask(__name__)
  
@@ -17,30 +16,17 @@ app.config['MYSQL_PASSWORD'] = 'Semesta123'
 app.config['MYSQL_DB'] = 'minimarket_semesta'
 app.config['MYSQL_PORT'] = 3306
 
-allowed_origins = [
-    "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/chat/yaya",
-    "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/chat/dini",
-    "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/chat/vito"
-]
 
 app.secret_key = 'secret key'
 CORS(app, origins=["*"])
-socketio = SocketIO(app, cors_allowed_origins="*", path="/socket.io")
-
-
-# Initialize limiter after app is configured
-# Initialize limiter with key_func
-limiter = Limiter(key_func=get_remote_address)
-
-# Initialize the app with limiter
-limiter.init_app(app)
+socketio = SocketIO(app)
 
 mysql = MySQL(app)
 
 # Konfigurasi API Duitku
 DUITKU_BASE_URL = "https://sandbox.duitku.com/webapi/api/merchant/v2/inquiry"
-MERCHANT_CODE = "DS21366"
-MERCHANT_KEY = "d2a335e77105918ce19b9733f9e9fd52" 
+MERCHANT_CODE = "DS21366"  # Ganti dengan kode merchant Anda
+MERCHANT_KEY = "d2a335e77105918ce19b9733f9e9fd52"  # Ganti dengan merchant key Anda
 
 
 
@@ -146,64 +132,140 @@ def handle_send_message(data):
     'message': message
     }, broadcast=True)
 
+def generate_signature(merchant_code, merchant_order_id, payment_amount, api_key):
+    data = f"{merchant_code}{merchant_order_id}{payment_amount}{api_key}"
+    return hashlib.md5(data.encode()).hexdigest()
+
 @app.route('/payment',  methods=['GET', 'POST'])
 def duitku():
-    # Ambil data dari session
-    no_nota = session.get('no_nota')
-    total_pembayaran = session.get('total_pembayaran')
-    produk_list = session.get('produk_list', [])
-    print(no_nota)
-    print(total_pembayaran)
-    print(produk_list)
-
-    if not no_nota or not total_pembayaran or not produk_list:
-        return jsonify({"error": "Data transaksi tidak lengkap."}), 400
-
-    # Siapkan payload untuk API Duitku
-    # Ambil waktu saat ini (datetime)
-    datetime_now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-    callback_url = "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/payment"  # URL untuk menerima notifikasi pembayaran
-    return_url = "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/transaksi"  # URL untuk redirect setelah pembayaran
-    print(datetime_now)
-
-    # Buat signature
-    signature_string = f"{MERCHANT_CODE}{total_pembayaran}{datetime_now}{MERCHANT_KEY}"
-    signature = hashlib.sha256(signature_string.encode('utf-8')).hexdigest()
-
-    print(f"Signature String: {signature_string}")
-    print(f"Signature (SHA256): {signature}")
-
-    payload = {
-        'merchantcode': MERCHANT_CODE,
-        'amount': total_pembayaran,
-        'datetime': datetime_now,
-        'signature': signature
-    }
- 
-    print(payload)
-    url = 'https://sandbox.duitku.com/webapi/api/merchant/paymentmethod/getpaymentmethod'
-    headers = {'Content-Type': 'application/json'}
-
     try:
-        response = requests.post(url, json=payload, headers=headers, verify=False)  # SSL verification dinonaktifkan
+    # Ambil data dari session
+        id_akun = session['id_akun']
+        username = session['username']
+        current_date = datetime.now().strftime("%Y%m%d")
+        no_nota = session.get('no_nota')
+        session_key = f"{no_nota}{current_date}"
+        total_pembayaran = session.get('total_pembayaran')
+        produk_list = session.get('produk_list', [])
+        payment_method = request.form.get('paymentMethod')
+        print(total_pembayaran)
+        print(produk_list)
+        print(payment_method)
+        print(type(session_key))
 
-        # Menangani respons
+        # Periksa apakah 'paymentAmount' ada di dalam data
+        if not no_nota or not total_pembayaran or not produk_list:
+            logging.error("Missing 'paymentAmount' in request data")
+            return jsonify({'error': "'paymentAmount' is required"}), 400
+        
+        callback_url = "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/payment"  # URL untuk menerima notifikasi pembayaran
+        return_url = "https://minimarketsemesta-a2bzf3fwd8a8fshq.canadacentral-01.azurewebsites.net/transaksi"
+        
+        # Hitung signature
+        signature = generate_signature(MERCHANT_CODE, session_key, total_pembayaran, MERCHANT_KEY)
+
+        # Tambahkan signature ke data payload
+        params = {
+            'merchantCode': MERCHANT_CODE,
+            'paymentAmount': total_pembayaran,
+            'paymentMethod': payment_method,
+            'merchantOrderId': session_key,
+            'productDetails': "pembelian produk",
+            'customerVaName': "minimarketsemesta",
+            'email': "minimarket@semesta.mail.com",
+            'phoneNumber': '0856789101112',
+            'callbackUrl': callback_url,
+            'returnUrl': return_url,
+            'signature': signature,
+            'expiryPeriod': (10)
+        }
+        print(params)
+
+        # Kirim permintaan ke endpoint transaksi Duitku
+        url = 'https://sandbox.duitku.com/webapi/api/merchant/v2/inquiry'
+        headers = {'Content-Type': 'application/json'}
+        # response = requests.post(url, data=json.dumps(params), headers=headers)
+        response = requests.post(url, json=params, headers=headers)
+
         if response.status_code == 200:
-            print("Respons:", response.json())
+            result = response.json()
+            logging.info(f"Transaction result: {result}")
+            print(result)
+            if result["statusCode"] == "00":
+                # Redirect ke URL pembayaran yang diterima
+                payment_url = result["paymentUrl"]
+                return redirect(payment_url)  # Redirect user ke halaman pembayaran
         else:
-            response_json = response.json()
-            error_message = response_json.get("Message", "Unknown error")
-            print(f"Server Error {response.status_code}: {error_message}")
+            logging.error(f"Failed to create transaction, response: {response.text}")
+            return jsonify({'error': 'Failed to create transaction', 'status_code': response.status_code, 'message': response.text}), 400
 
     except Exception as e:
-        print(f"Terjadi kesalahan: {e}")
+        logging.error(f"Error creating transaction: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/payment/callback', methods=['POST'])
+def duitku_callback():
+    try:
+        # Pastikan data diterima dengan benar
+        data = request.form  # Jika data dikirim dalam form-data
+        if not data:
+            data = request.json  # Jika data dikirim dalam JSON
+        
+        # Debug data untuk memastikan formatnya
+        logging.info(f"Callback Data: {data}")
+
+        # Ambil parameter penting
+        merchant_order_id = data.get('merchantOrderId')
+        amount = data.get('amount')
+        result_code = data.get('resultCode')
+        signature = data.get('signature')
+
+        # Validasi signature
+        calculated_signature = hashlib.md5(
+            f"{merchant_order_id}{amount}{MERCHANT_KEY}".encode()
+        ).hexdigest()
+
+        if signature == calculated_signature:
+            if result_code == "00":
+                # Transaksi berhasil
+                logging.info(f"Transaction successful for Order ID: {merchant_order_id}")
+
+                # Simpan status transaksi ke database atau sesi (opsional)
+                session['transaksi_sukses'] = True
+                session['no_nota'] = merchant_order_id
+
+                # Redirect ke halaman transaksi
+                return redirect(url_for('transaksi'))
+            else:
+                # Transaksi gagal
+                logging.warning(f"Transaction failed for Order ID: {merchant_order_id}, Reason: {data.get('statusMessage')}")
+
+                # Redirect ke halaman gagal
+                return redirect(url_for('transaksi'))
+        else:
+            logging.error("Invalid signature in callback")
+            return "Invalid signature", 400
+
+    except Exception as e:
+        logging.error(f"Error processing callback: {e}")
+        return "Error processing callback", 500
+
     
 @app.route('/transaksi', methods=['GET'])
 def transaksi():
     if 'loggedin' in session:
         session['loggedin'] = True
+        # Ambil data transaksi dari sesi
         id_akun = session['id_akun']
         username = session['username']
+        if session.get('transaksi_sukses'):
+            no_nota = session.get('no_nota')
+            total_pembayaran = session.get('total_pembayaran')
+
+            # Reset status transaksi sukses setelah ditampilkan
+            session.pop('transaksi_sukses', None)
+            return render_template('dashboard kasir.html', id_akun=id_akun, username=username, no_nota=no_nota,
+                    total_pembayaran=total_pembayaran)
         return render_template('dashboard kasir.html', id_akun=id_akun, username=username)
     else:
         return redirect(url_for('login'))  # Redirect to login page if not logged in
@@ -258,7 +320,6 @@ def input_transaksi():
             session['total_pembayaran'] = total_pembayaran
             print(total_pembayaran)
             username = session['username']
-
             return render_template('dashboard kasir.html', produk_list=produk_list, total_pembayaran=total_pembayaran, tanggal=tanggal, no_nota=no_nota, username=username)
 
         elif 'dibayarkan' in request.form:
