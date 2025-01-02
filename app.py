@@ -7,6 +7,10 @@ import hashlib
 import requests
 from datetime import datetime
 import logging
+import eventlet
+
+# Mengaktifkan eventlet untuk non-blocking I/O
+eventlet.monkey_patch()
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -583,4 +587,4 @@ def handle_rate_limit(e):
 
 if __name__ == '_main_':
     app.run(debug=True)
-    socketio.run(app, host='0.0.0.0', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5000, server='eventlet')
