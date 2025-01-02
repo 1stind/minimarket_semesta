@@ -1,5 +1,3 @@
-import eventlet
-eventlet.monkey_patch()
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, json
 from flask_mysqldb import MySQL, MySQLdb
 import mysql.connector
