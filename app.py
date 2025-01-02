@@ -18,8 +18,7 @@ app.config['MYSQL_PORT'] = 3306
 
 
 app.secret_key = 'secret key'
-CORS(app, origins=["*"])
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 mysql = MySQL(app)
 
@@ -582,3 +581,4 @@ def handle_rate_limit(e):
 
 if __name__ == '_main_':
     app.run(debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000)
