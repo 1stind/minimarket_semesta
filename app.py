@@ -7,6 +7,9 @@ import hashlib
 import requests
 from datetime import datetime
 import logging
+import eventlet
+eventlet.monkey_patch()
+logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
  
