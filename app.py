@@ -98,7 +98,7 @@ def chat_page(kasir):
     cursor.execute(query, (username, kasir, kasir, username))
     messages = cursor.fetchall()
 
-    return render_template('admin chat.html', kasir=kasir, messages=messages)
+    return render_template('admin chat.html', username=username, kasir=kasir, messages=messages)
 
 @socketio.on('send_message')
 def handle_send_message(data):
