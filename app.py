@@ -1,18 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, json
 from flask_mysqldb import MySQL, MySQLdb
 import mysql.connector
-from flask_socketio import SocketIO, emit
-from flask_cors import CORS
 import hashlib
 import requests
 from datetime import datetime
 import logging
-import eventlet
-
-# Mengaktifkan eventlet untuk non-blocking I/O
-eventlet.monkey_patch()
-
-logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
  
@@ -24,7 +16,6 @@ app.config['MYSQL_PORT'] = 3306
 
 
 app.secret_key = 'secret key'
-socketio = SocketIO(app, cors_allowed_origins="*")
 
 mysql = MySQL(app)
 
@@ -83,59 +74,50 @@ def logout():
         return redirect(url_for('home'))
     else:
         return redirect(url_for('home'))
-        
-@app.route('/chat/<kasir>')
-def chat_page(kasir):
-    username = session.get('username')
-    role = session.get('role')
 
-    # Ambil pesan dari database
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    query = """
-        SELECT * FROM tbl_chat 
-        WHERE (pengirim = %s AND penerima = %s) 
-           OR (pengirim = %s AND penerima = %s) 
-        ORDER BY waktu_chat ASC
-    """
-    cursor.execute(query, (username, kasir, kasir, username))
-    messages = cursor.fetchall()
+@app.route('/send_notification', methods=['POST'])
+def send_notification():
+    penerima = request.form.get('kasir')  # Dapatkan kasir yang dipilih
+    pesan = request.form.get('pesan')    # Dapatkan pesan yang dikirimkan
+    pengirim = "admin"                   # Pengirim adalah admin
 
-    return render_template('admin chat.html', username=username, kasir=kasir, messages=messages)
+    cur = mysql.connection.cursor()
 
-@socketio.on('send_message')
-def handle_send_message(data):
-    pengirim = session.get('username')
-    role = session.get('role')  # Untuk validasi tambahan
-    penerima = data['penerima']
-    message = data['message']
-    print(f"Pengirim: {pengirim}, Penerima: {penerima}, Pesan: {message}")
-
-    # Validasi penerima jika role adalah kasir
-    if role == 'kasir':
-        penerima = 'indra'  # Semua pesan dari kasir ditujukan ke admin
-    elif role == 'admin' and not penerima:
-        return  # Jika admin tidak menentukan penerima, abaikan pesan
-    
-    message = data['message']
-    # Simpan pesan ke database
-    try:
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        query = """
-            INSERT INTO tbl_chat (pengirim, penerima, chat, waktu_chat)
-            VALUES (%s, %s, %s, NOW())
-        """
-        cursor.execute(query, (pengirim, penerima, message))
+    # Jika memilih "All User", kirim ke semua kasir
+    if penerima == 'allkasir':  # All users
+        users = cur.fetchall()
+        for user in users:
+            cur.execute("INSERT INTO tbl_chat (pengirim, penerima, chat) VALUES (%s, %s, %s, %s)", 
+                        (pengirim, 'allkasir', pesan))  # 'kasir' sebagai penerima umum
         mysql.connection.commit()
-    except Exception as e:
-        print(f"Error menyimpan pesan: {e}")
-        return
+    else:  # Kirim ke kasir tertentu
+        cur.execute("INSERT INTO tbl_chat (pengirim, penerima, chat) VALUES (%s, %s, %s)", 
+                    (pengirim, penerima, pesan))
+        mysql.connection.commit()
 
-    # Kirimkan pesan ke penerima
-    emit('receive_message', {
-    'pengirim': pengirim,
-    'penerima': penerima,
-    'message': message
-    }, broadcast=True)
+    cur.close()
+    return redirect(url_for('riwayat'))
+
+@app.route('/notif/<username>', methods=['GET'])
+def notif(username):
+    username = session.get('username')
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    # Query untuk mengambil pesan antara admin dan kasir tertentu
+    query = """
+    SELECT chat, waktu_chat FROM tbl_chat 
+    WHERE pengirim = 'admin' AND (penerima = %s OR penerima = 'allkasir')
+    ORDER BY waktu_chat ASC
+    """
+    cursor.execute(query, (username,))
+
+    messages = cursor.fetchall()
+    cursor.close()
+    print(query)
+    print(username)
+    print(messages)
+    return render_template('admin chat.html', messages=messages, username=username)
+
 
 def generate_signature(merchant_code, merchant_order_id, payment_amount, api_key):
     data = f"{merchant_code}{merchant_order_id}{payment_amount}{api_key}"
@@ -443,9 +425,9 @@ def riwayat():
 
             cursor.close()
             
-            return render_template('dashboard admin.html', transaksi_list=transaksi_list, jumlah_produk=jumlah_produk, total_pemasukan=total_pemasukan, kasir_satu=kasir_satu, kasir_dua=kasir_dua)
+            return render_template('dashboard admin.html', transaksi_list=transaksi_list, jumlah_produk=jumlah_produk, total_pemasukan=total_pemasukan)
     else:
-        return redirect(url_for('login page'))
+        return redirect(url_for('login'))
 
 @app.route('/produk', methods=['GET', 'POST'])
 def produk():
@@ -587,4 +569,3 @@ def handle_rate_limit(e):
 
 if __name__ == '_main_':
     app.run(debug=True)
-    socketio.run(app, host='0.0.0.0', port=5000, server='eventlet')

@@ -53,32 +53,12 @@
                             </a>
                         </li>
                         <li class="nav-item has-treeview" data-widget="treeview">
-                            <a href="#" class="nav-link">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#notifikasiModal">
                                 <i class="nav-icon fas fa-envelope"></i>
                                 <p>
                                     Pesan
                                 </p>
                             </a>
-                            <ul class="nav nav-treeview">
-                                <li class="nav-item">
-                                    <a href="{{ url_for('chat_page', kasir='yaya') }}" class="nav-link">
-                                        <i class="far fa-circle nav-icon"></i>
-                                        <p>kasir yaya</p>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="{{ url_for('chat_page', kasir='dini') }}" class="nav-link">
-                                        <i class="far fa-circle nav-icon"></i>
-                                        <p>kasir dini</p>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="{{ url_for('chat_page', kasir='vito') }}" class="nav-link">
-                                        <i class="far fa-circle nav-icon"></i>
-                                        <p>kasir vito</p>
-                                    </a>
-                                </li>
-                            </ul>
                         </li>
                 </nav>
             </div>
@@ -161,9 +141,47 @@
                             </div>
                           </div>
                         </div> 
+                        <!-- Modal -->
+            <!-- Modal untuk memilih kasir dan mengirim pesan -->
+<div class="modal fade" id="notifikasiModal" tabindex="-1" aria-labelledby="notifikasiModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+       <div class="modal-content">
+          <div class="modal-header">
+             <h5 class="modal-title" id="notifikasiModalLabel">Kirim Notifikasi</h5>
+             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+             <!-- Form untuk mengirim notifikasi -->
+             <form method="POST" action="/send_notification">
+                <div class="form-group">
+                   <label for="pilihkasir">Pilih Username Kasir</label>
+                   <select name="kasir" id="pilihkasir" class="form-control" required>
+                      <option value="" disabled selected>Pilih Username Kasir</option>
+                      <option value="yaya">yaya</option>
+                      <option value="dini">dini</option>
+                      <option value="vito">vito</option>
+                      <option value="allkasir">All User</option>
+                   </select>
+                </div>
+                <div class="form-group">
+                   <label for="pesan">Pesan</label>
+                   <textarea name="pesan" id="pesan" class="form-control" required></textarea>
+                </div>
+                <div class="modal-footer">
+                   <button type="submit" class="btn btn-primary">Kirim Notifikasi</button>
+                </div>
+             </form>
+          </div>
+       </div>
+    </div>
+ </div>
+ 
+            
+  
                    <!-- Pemuatan jQuery -->
-
-                   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                     <!-- Bootstrap JS -->
+                     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
                    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/js/adminlte.min.js"></script>
 
     </body><!--end::Body-->
